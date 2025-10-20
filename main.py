@@ -1,16 +1,28 @@
 import machine
-from machine import Pin
-from ir_rx.nec import NEC_8
-from ir_rx.print_error import print_error
+import time
+from machine import Pin, PWM
 
-def ir_callback(data, addr, _):
-    print(f"Received NEC command! Data: 0x{data:02X}, Address: 0x{addr:02X}")
+time.sleep(0.5)
 
-ir_pin = Pin(14, Pin.IN, Pin.PULL_UP)
+pwm_rate = 2000
+ain1_ph = Pin(12, Pin.OUT)  # Initialize GP12 as an OUTPUT
+ain2_en = PWM(Pin(13), freq=pwm_rate, duty_u16=0)
 
-ir_receiver = NEC_8(ir_pin, callback=ir_callback)
+bin1_ph = Pin(11, Pin.OUT)  # Initialize GP12 as an OUTPUT
+bin2_en = PWM(Pin(10), freq=pwm_rate, duty_u16=0)
 
-ir_receiver.error_function(print_error)
+pwm = min(max(int(2**16 * abs(1)), 0), 65535)
 
 while True:
-    pass  # GPIO14 for IR receiver
+    print("Motor ON") # Print to REPL
+    ain1_ph.low()
+    ain2_en.duty_u16(pwm)
+    bin1_ph.low()
+    bin2_en.duty_u16(pwm)
+    time.sleep(2)
+    print("Motor OFF") # Print to REPL
+    ain1_ph.low()
+    ain2_en.duty_u16(0)
+    bin1_ph.low()
+    bin2_en.duty_u16(0)
+    time.sleep(2)
