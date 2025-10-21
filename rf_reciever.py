@@ -12,32 +12,31 @@ input2 = Pin(1, Pin.IN, Pin.PULL_UP)
 input3 = Pin(2, Pin.IN, Pin.PULL_UP)
 input4 = Pin(3, Pin.IN, Pin.PULL_UP)
 
-def main():
-    while True:
-        if input1.value() == 1:
-            led1.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led1.value(0)
-        if input2.value() == 1:
-            led2.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led2.value(0)
-        if input3.value() == 1:
-            led3.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led3.value(0)
-        if input4.value() == 1:
-            led4.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led4.value(0)
+def read_rf():
+    if input1.value() == 1:
+        led1.value(1)
+        print("Input 1 activated")
+        time.sleep(0.2)
+    else:
+        led1.value(0)
+    if input2.value() == 1:
+        led2.value(1)
+        print("Input 1 activated")
+        time.sleep(0.2)
+    else:
+        led2.value(0)
+    if input3.value() == 1:
+        led3.value(1)
+        print("Input 1 activated")
+        time.sleep(0.2)
+    else:
+        led3.value(0)
+    if input4.value() == 1:
+        led4.value(1)
+        print("Input 1 activated")
+        time.sleep(0.2)
+    else:
+        led4.value(0)
 
 if __name__ == "__main__":
-    main()
+    read_rf()

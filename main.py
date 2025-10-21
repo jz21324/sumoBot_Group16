@@ -1,43 +1,33 @@
 import machine
 from machine import Pin, PWM
-import time
+from ir_rx.nec import NEC_8
+from ir_rx.print_error import print_error
+from time import sleep
+import rf_reciever
 
-led1 = Pin(14, Pin.OUT)
-led2 = Pin(15, Pin.OUT)
-led3 = Pin(16, Pin.OUT)
-led4 = Pin(17, Pin.OUT)
+switch = Pin(22, Pin.IN, Pin.PULL_UP)
 
-input1 = Pin(0, Pin.IN, Pin.PULL_UP)
-input2 = Pin(1, Pin.IN, Pin.PULL_UP)
-input3 = Pin(2, Pin.IN, Pin.PULL_UP)
-input4 = Pin(3, Pin.IN, Pin.PULL_UP)
+def ir_callback(data, addr, _):
+    print(f"Received NEC command! Data: 0x{data:02X}, Address: 0x{addr:02X}")
+    rf_reciever.led1.value(1)
+    rf_reciever.led2.value(1)
+    rf_reciever.led3.value(1)
+    rf_reciever.led4.value(1)
 
-def main():
-    while True:
-        if input1.value() == 1:
-            led1.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led1.value(0)
-        if input2.value() == 1:
-            led2.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led2.value(0)
-        if input3.value() == 1:
-            led3.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led3.value(0)
-        if input4.value() == 1:
-            led4.value(1)
-            print("Input 1 activated")
-            time.sleep(0.2)
-        else:
-            led4.value(0)
+ir_pin = Pin(19, Pin.IN, Pin.PULL_UP)
 
-if __name__ == "__main__":
-    main()
+
+ir_receiver = NEC_8(ir_pin, callback=ir_callback)
+
+ir_receiver.error_function(print_error)
+
+while True:
+    if switch.value() == 0:
+        print("IR Receiver Disabled")
+        ir_receiver.callback = None
+        rf_reciever.read_rf()
+    else:
+        print("IR Receiver Enabled")
+        ir_receiver.callback = ir_callback
+        sleep(0.1)
+        
