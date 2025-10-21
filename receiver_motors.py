@@ -9,9 +9,6 @@ time.sleep(0.5)
 
 def ir_callback(data, addr, _):
     print(f"Received NEC command! Data: 0x{data:02X}, Address: 0x{addr:02X}")
-    led1.value(1)
-    led2.value(1)
-    led3.value(1)
     ain1_ph.low()
     bin1_ph.low()
     ain2_en.duty_u16(65535)
@@ -19,10 +16,6 @@ def ir_callback(data, addr, _):
 
     time.sleep(2)
 
-    # Turn OFF LEDs and motors
-    led1.value(0)
-    led2.value(0)
-    led3.value(0)
     ain2_en.duty_u16(0)
     bin2_en.duty_u16(0)
 
@@ -34,9 +27,6 @@ bin1_ph = Pin(11, Pin.OUT)  # Initialize GP12 as an OUTPUT
 bin2_en = PWM(Pin(10), freq=pwm_rate, duty_u16=0)
 
 ir_pin = Pin(19, Pin.IN, Pin.PULL_UP)
-led1 = Pin(16, Pin.OUT)
-led2 = Pin(17, Pin.OUT)
-led3 = Pin(20, Pin.OUT)
 
 ir_receiver = NEC_8(ir_pin, callback=ir_callback)
 

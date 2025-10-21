@@ -18,3 +18,9 @@ if __name__ == "__main__":
         print("COMMANDS",hex(command),"TRANSMITTED.")
         pin.toggle()
         time.sleep(1)
+
+def transmutation():
+    transmitter.transmit(device_addr,commands[0])
+    print("COMMANDS",hex(commands[0]),"TRANSMITTED.")
+    pin.toggle()
+    time.sleep(0.1)
