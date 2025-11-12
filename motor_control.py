@@ -8,8 +8,8 @@ pwm_rate = 2000
 ain1_ph = Pin(12, Pin.OUT)  # Initialize GP12 as an OUTPUT
 ain2_en = PWM(Pin(13), freq=pwm_rate, duty_u16=0)
 
-bin1_ph = Pin(11, Pin.OUT)  # Initialize GP12 as an OUTPUT
-bin2_en = PWM(Pin(10), freq=pwm_rate, duty_u16=0)
+bin1_ph = Pin(14, Pin.OUT)  # Initialize GP12 as an OUTPUT
+bin2_en = PWM(Pin(15), freq=pwm_rate, duty_u16=0)
 
 pwm = min(max(int(2**16 * abs(1)), 0), 65535)
 

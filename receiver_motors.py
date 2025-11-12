@@ -23,14 +23,14 @@ pwm_rate = 2000
 ain1_ph = Pin(12, Pin.OUT)  # Initialize GP12 as an OUTPUT
 ain2_en = PWM(Pin(13), freq=pwm_rate, duty_u16=0)
 
-bin1_ph = Pin(11, Pin.OUT)  # Initialize GP12 as an OUTPUT
-bin2_en = PWM(Pin(10), freq=pwm_rate, duty_u16=0)
+bin1_ph = Pin(14, Pin.OUT)  # Initialize GP12 as an OUTPUT
+bin2_en = PWM(Pin(15), freq=pwm_rate, duty_u16=0)
 
-ir_pin = Pin(19, Pin.IN, Pin.PULL_UP)
+ir_pin = Pin(18, Pin.IN, Pin.PULL_UP)
 
 ir_receiver = NEC_8(ir_pin, callback=ir_callback)
 
-pwm1 = Pin(18) # Set the pin for the PWM object
+pwm1 = Pin(17) # Set the pin for the PWM object
 
 ir_receiver.error_function(print_error)
 

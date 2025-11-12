@@ -1,33 +1,34 @@
 import machine
 from machine import Pin, PWM
-from ir_rx.nec import NEC_8
-from ir_rx.print_error import print_error
-from time import sleep
-import rf_reciever
+import time
 
-switch = Pin(22, Pin.IN, Pin.PULL_UP)
+pwm_rate = 2000
+ain1_ph = Pin(12, Pin.OUT)  # Initialize GP12 as an OUTPUT
+ain2_en = PWM(Pin(13), freq=pwm_rate, duty_u16=0)
 
-def ir_callback(data, addr, _):
-    print(f"Received NEC command! Data: 0x{data:02X}, Address: 0x{addr:02X}")
-    rf_reciever.led1.value(1)
-    rf_reciever.led2.value(1)
-    rf_reciever.led3.value(1)
-    rf_reciever.led4.value(1)
+bin1_ph = Pin(14, Pin.OUT)  # Initialize GP12 as an OUTPUT
+bin2_en = PWM(Pin(15), freq=pwm_rate, duty_u16=0)
 
-ir_pin = Pin(19, Pin.IN, Pin.PULL_UP)
+pwm = min(max(int(2**16 * abs(1)), 0), 65535)
 
+inputA = Pin(4, Pin.IN, Pin.PULL_UP)
+inputB = Pin(5, Pin.IN, Pin.PULL_UP)
+inputC = Pin(6, Pin.IN, Pin.PULL_UP)
+inputD = Pin(7, Pin.IN, Pin.PULL_UP)
 
-ir_receiver = NEC_8(ir_pin, callback=ir_callback)
-
-ir_receiver.error_function(print_error)
-
-while True:
-    if switch.value() == 0:
-        print("IR Receiver Disabled")
-        ir_receiver.callback = None
-        rf_reciever.read_rf()
+def read_rf():
+    if inputA.value() == 1:
+        print("Motor A ON") # Print to REPL
+        ain1_ph.low()
+        ain2_en.duty_u16(pwm)
     else:
-        print("IR Receiver Enabled")
-        ir_receiver.callback = ir_callback
-        sleep(0.1)
-        
+        print("Motor OFF") # Print to REPL
+        ain1_ph.low()
+        ain2_en.duty_u16(0)
+
+if __name__ == "__main__":
+    time.sleep(0.5)
+
+    while True:
+        read_rf()
+        time.sleep(0.01)
