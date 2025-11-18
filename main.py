@@ -9,7 +9,7 @@ ain2_en = PWM(Pin(13), freq=pwm_rate, duty_u16=0)
 bin1_ph = Pin(14, Pin.OUT)  # Initialize GP12 as an OUTPUT
 bin2_en = PWM(Pin(15), freq=pwm_rate, duty_u16=0)
 
-pwm = min(max(int(2**16 * abs(1)), 0), 6553)
+pwm = min(max(int(2**16 * abs(1)), 0), 65535)
 
 input1 = Pin(4, Pin.IN, Pin.PULL_UP)
 input2 = Pin(5, Pin.IN, Pin.PULL_UP)
