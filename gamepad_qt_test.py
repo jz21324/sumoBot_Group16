@@ -1,131 +1,152 @@
 from machine import I2C, Pin
-import seesaw
 import time
-from transmitter import transmutation
+from seesaw import Seesaw
+from transmitter import transmutation   # your IR send function
 
+# -------------------------------------------------------------------
+# I2C + SEESAW INITIALIZATION
+# -------------------------------------------------------------------
 
-# Initialize I2C. Adjust pin numbers based on your Pico's configuration
-i2c = I2C(0, scl=Pin(1), sda=Pin(0))
+i2c = I2C(1, scl=Pin(3), sda=Pin(2), freq=100000)
 
+print("I2C scan:", i2c.scan())
+# Should show: [8, 80]  ---> 0x08 and 0x50
+# We use 0x50 for the Seesaw
+seesaw_dev = Seesaw(i2c, addr=0x50)
 
-print("Scan:", i2c.scan())
-       
-seesaw_device = seesaw.Seesaw(i2c, addr=0x50)
+# -------------------------------------------------------------------
+# GAMEPAD CONSTANTS
+# -------------------------------------------------------------------
 
-
-# Define button and joystick pin numbers as per the Arduino code
 BUTTON_A = 5
 BUTTON_B = 1
 BUTTON_X = 6
 BUTTON_Y = 2
 BUTTON_START = 16
 BUTTON_SELECT = 0
+
 JOYSTICK_X_PIN = 14
 JOYSTICK_Y_PIN = 15
 
+BUTTONS_MASK = (
+    (1 << BUTTON_X)
+    | (1 << BUTTON_Y)
+    | (1 << BUTTON_A)
+    | (1 << BUTTON_B)
+    | (1 << BUTTON_SELECT)
+    | (1 << BUTTON_START)
+)
 
-# Button mask based on Arduino code
-BUTTONS_MASK = (1 << BUTTON_X) | (1 << BUTTON_Y) | \
-(1 << BUTTON_A) | (1 << BUTTON_B) | \
-(1 << BUTTON_SELECT) | (1 << BUTTON_START)
 LED_1_PIN = 12
 LED_2_PIN = 13
 LED_3_PIN = 15
 LED_4_PIN = 14
 
+joystick_center_x = 511
+joystick_center_y = 497
+joystick_threshold = 50
 
-# Initialize LED states
-led_states = {
-BUTTON_A: False,
-BUTTON_B: False,
-BUTTON_X: False,
-BUTTON_Y: False,
-BUTTON_START: False,
-BUTTON_SELECT: False
-}
-
-
-# Initialize last button states
+# Track last button state to detect new presses
 last_buttons = 0
 
 
-# Initialize joystick center position
-joystick_center_x = 511
-joystick_center_y = 497
-def setup_buttons():
-   """Configure the pin modes for buttons."""
-   seesaw_device.pin_mode_bulk(BUTTONS_MASK, seesaw_device.INPUT_PULLUP)
-  
+# -------------------------------------------------------------------
+# SETUP
+# -------------------------------------------------------------------
+def setup():
+    seesaw_dev.pin_mode_bulk(BUTTONS_MASK, seesaw_dev.INPUT_PULLUP)
+    print("Buttons configured.")
+
+
+# -------------------------------------------------------------------
+# READ BUTTONS
+# -------------------------------------------------------------------
 def read_buttons():
-    """Read and return the state of each button."""
-    return seesaw_device.digital_read_bulk(BUTTONS_MASK)
+    return seesaw_dev.digital_read_bulk(BUTTONS_MASK)
 
 
-def read_joystick():
-    """Read and return the joystick's X and Y positions."""
-    x_value = seesaw_device.analog_read(JOYSTICK_X_PIN)
-    y_value = seesaw_device.analog_read(JOYSTICK_Y_PIN)
-    return x_value, y_value
-
-
-def set_led(pin, state):
-    """Turn the LED connected to the given pin on or off."""
-    pin.value(state)
-
-
-def handle_button_press(button):
-   """Toggle the corresponding LED state on button press."""
-   global led_states
-   led_states[button] = not led_states[button]
-   if button == BUTTON_A:
-       set_led(Pin(LED_1_PIN, Pin.OUT), led_states[button])
-   elif button == BUTTON_B:
-       set_led(Pin(LED_2_PIN, Pin.OUT), led_states[button])
-   elif button == BUTTON_X:
-       set_led(Pin(LED_3_PIN, Pin.OUT), led_states[button])
-   elif button == BUTTON_Y:
-       set_led(Pin(LED_4_PIN, Pin.OUT), led_states[button])
-   print("Button", button, "is", "pressed" if led_states[button] else "released")
-
-
-
-
-def main():
-    """Main program loop."""
+# -------------------------------------------------------------------
+# PROCESS BUTTONS
+# -------------------------------------------------------------------
+def handle_buttons(current_buttons):
     global last_buttons
-    setup_buttons()
-    last_x, last_y = seesaw_device.analog_read(JOYSTICK_X_PIN), seesaw_device.analog_read(JOYSTICK_Y_PIN)
-    joystick_threshold = 50
-    while True:
-        current_buttons = read_buttons()
-        for button in led_states:
-            if current_buttons & (1 << button) and not last_buttons & (1 << button):
-                handle_button_press(button)
-    
-        current_x = seesaw_device.analog_read(JOYSTICK_X_PIN)
-        current_y = seesaw_device.analog_read(JOYSTICK_Y_PIN)
-        
-        if abs(current_x - last_x) > joystick_threshold or abs(current_y - last_y) > joystick_threshold:
-            transmutation()
-            print("Joystick moved - X:", current_x, ", Y:", current_y)
-            last_x, last_y = current_x, current_y
-        
-            set_led(Pin(LED_1_PIN, Pin.OUT), False)
-            set_led(Pin(LED_2_PIN, Pin.OUT), False)
-            set_led(Pin(LED_3_PIN, Pin.OUT), False)
-            set_led(Pin(LED_4_PIN, Pin.OUT), False)
-        
-            if current_y < joystick_center_y - joystick_threshold: # Joystick moved up
-                set_led(Pin(LED_1_PIN, Pin.OUT), True)
-            elif current_y > joystick_center_y + joystick_threshold: # Joystick moved down
-                set_led(Pin(LED_2_PIN, Pin.OUT), True)
-            elif current_x < joystick_center_x - joystick_threshold: # Joystick moved left
-                set_led(Pin(LED_3_PIN, Pin.OUT), True)
-            elif current_x > joystick_center_x + joystick_threshold: # Joystick moved right
-                set_led(Pin(LED_4_PIN, Pin.OUT), True)
-            
-        last_buttons = current_buttons
-        time.sleep(0.1)
 
+    # Detect new presses
+    changed = current_buttons & ~last_buttons
+
+    if changed & (1 << BUTTON_A):
+        print("A pressed → SEND IR")
+        transmutation()    # your IR send
+    if changed & (1 << BUTTON_B):
+        print("B pressed → SEND IR")
+        transmutation()
+    if changed & (1 << BUTTON_X):
+        print("X pressed → SEND IR")
+        transmutation()
+    if changed & (1 << BUTTON_Y):
+        print("Y pressed → SEND IR")
+        transmutation()
+
+    last_buttons = current_buttons
+
+
+# -------------------------------------------------------------------
+# READ JOYSTICK
+# -------------------------------------------------------------------
+def read_joystick():
+    x = seesaw_dev.analog_read(JOYSTICK_X_PIN)
+    y = seesaw_dev.analog_read(JOYSTICK_Y_PIN)
+    return x, y
+
+
+# -------------------------------------------------------------------
+# PROCESS JOYSTICK MOVEMENT
+# -------------------------------------------------------------------
+def handle_joystick(x, y):
+    if abs(x - joystick_center_x) < joystick_threshold and \
+       abs(y - joystick_center_y) < joystick_threshold:
+        return  # dead zone — don't send anything
+
+    if y < joystick_center_y - joystick_threshold:
+        print("Joystick UP → SEND IR")
+        transmutation()
+
+    elif y > joystick_center_y + joystick_threshold:
+        print("Joystick DOWN → SEND IR")
+        transmutation()
+
+    elif x < joystick_center_x - joystick_threshold:
+        print("Joystick LEFT → SEND IR")
+        transmutation()
+
+    elif x > joystick_center_x + joystick_threshold:
+        print("Joystick RIGHT → SEND IR")
+        transmutation()
+
+
+# -------------------------------------------------------------------
+# MAIN LOOP
+# -------------------------------------------------------------------
+def main():
+    setup()
+    last_x, last_y = read_joystick()
+
+    while True:
+        # BUTTON HANDLING
+        current_buttons = read_buttons()
+        handle_buttons(current_buttons)
+
+        # JOYSTICK HANDLING
+        x, y = read_joystick()
+        if abs(x - last_x) > joystick_threshold or abs(y - last_y) > joystick_threshold:
+            handle_joystick(x, y)
+            last_x, last_y = x, y
+
+        time.sleep(0.05)
+
+
+# -------------------------------------------------------------------
+# RUN
+# -------------------------------------------------------------------
 if __name__ == "__main__":
     main()

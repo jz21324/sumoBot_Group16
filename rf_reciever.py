@@ -21,19 +21,19 @@ def read_rf():
         led1.value(0)
     if input2.value() == 1:
         led2.value(1)
-        print("Input 1 activated")
+        print("Input 2 activated")
         time.sleep(0.2)
     else:
         led2.value(0)
     if input3.value() == 1:
         led3.value(1)
-        print("Input 1 activated")
+        print("Input 3 activated")
         time.sleep(0.2)
     else:
         led3.value(0)
     if input4.value() == 1:
         led4.value(1)
-        print("Input 1 activated")
+        print("Input 4 activated")
         time.sleep(0.2)
     else:
         led4.value(0)
